@@ -15,7 +15,8 @@ RAW = ROOT / "data" / "raw"
 SLEAGUE_WORDS = ("시민리그", "S-리그", "S리그")
 ZONES = ["P", "C", "1B", "2B", "3B", "SS", "LF", "LC", "CF", "RC", "RF"]
 SEASONS = ["전체", "2025", "2026"]
-SCOPES = ["all", "sl"]  # 전체 경기 / S리그만
+SCOPES = ["all", "team", "sl"]  # 전체 경기 / 이 팀 소속 경기만 / S리그만
+TEAM_NAMES = {"AGARI": {"아가리 OB", "아가리OB 2"}, "디펜스원": {"디펜스원"}}
 
 
 def is_sl(league):
@@ -153,6 +154,8 @@ def main():
             base = {"gid": g["game_idx"], "date": g.get("date", ""), "season": str(g["season"]),
                     "league": g.get("league", ""), "opp": g.get("opp", ""), "sl": is_sl(g.get("league")),
                     "url": "https://www.gameone.kr" + g["url"]}
+            mine = TEAM_NAMES[p["team"]]
+            base["own"] = any(r.get("team") in mine for r in g["bat"][:1] + g["pit"][:1])
             for b in g["bat"][:1]:
                 pas = []
                 for inn, cell in b["pa"]:
@@ -168,7 +171,8 @@ def main():
         hit, pit = {}, {}
         for s in SEASONS:
             for sc in SCOPES:
-                f = lambda g: (s == "전체" or g["season"] == s) and (sc == "all" or g["sl"])  # noqa: E731
+                f = lambda g: (s == "전체" or g["season"] == s) and (  # noqa: E731
+                    sc == "all" or (sc == "sl" and g["sl"]) or (sc == "team" and g["own"]))
                 hit[f"{s}|{sc}"] = hit_agg([g for g in bat_games if f(g)], hand)
                 pit[f"{s}|{sc}"] = pit_agg([g for g in pit_games if f(g)])
         out.append({
@@ -202,7 +206,7 @@ def write_csv(out):
             for key, a in p["hit"].items():
                 if a["PA"]:
                     s, sc = key.split("|")
-                    w.writerow([p["team"], p["name"], p["no"], p["hand"], s, "S리그" if sc == "sl" else "전체경기"]
+                    w.writerow([p["team"], p["name"], p["no"], p["hand"], s, {"sl": "S리그", "team": "소속팀경기", "all": "전체경기"}[sc]]
                                + [a["zone"][c[5:]] if c.startswith("zone_") else a.get(c) for c in hcols])
     with open(data / "pitchers.csv", "w", newline="", encoding="utf-8-sig") as f:
         w = csv.writer(f)
@@ -211,7 +215,7 @@ def write_csv(out):
             for key, a in p["pit"].items():
                 if a["G"]:
                     s, sc = key.split("|")
-                    w.writerow([p["team"], p["name"], p["no"], p["hand"], s, "S리그" if sc == "sl" else "전체경기"]
+                    w.writerow([p["team"], p["name"], p["no"], p["hand"], s, {"sl": "S리그", "team": "소속팀경기", "all": "전체경기"}[sc]]
                                + [a.get(c) for c in pcols])
 
 

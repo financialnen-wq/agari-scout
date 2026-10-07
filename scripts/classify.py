@@ -21,15 +21,24 @@ NON_PA = ("도루", "도루자", "주자아웃", "폭투", "포일", "보크", "
 BATTED = re.compile(r"^(인)?(좌중|우중|투|포|유|좌|중|우|1|2|3)(선|월|전|G)?(.*)$")
 
 
+ERR_FIRST = ("송구실책", "포구실책", "실책")
+
+
 def split_cell(cell):
-    """이닝 칸 → [타석 결과 문자열]"""
+    """이닝 칸 → [타석 결과 문자열]
+    한 덩어리의 첫 결과만 타석, 나머지는 주루. 단 '송구실책,사구'처럼 주자 실책이 먼저 적히고
+    뒤에 진짜 타석 결과가 오면 뒤의 것을 쓴다."""
     out = []
     for chunk in cell.split("/"):
-        for tok in chunk.split(","):
-            tok = tok.strip()
-            if tok and not tok.startswith(NON_PA):
-                out.append(tok)
-                break  # 한 덩어리의 첫 결과만 타석, 나머지는 주루
+        cands = [t.strip() for t in chunk.split(",") if t.strip() and not t.strip().startswith(NON_PA)]
+        if not cands:
+            continue
+        pick = cands[0]
+        if pick.startswith(ERR_FIRST):
+            later = [t for t in cands[1:] if not t.startswith(ERR_FIRST) and classify(t)]
+            if later:
+                pick = later[0]
+        out.append(pick)
     return out
 
 
@@ -55,6 +64,9 @@ def classify(raw):
         return {"res": "CI", "bb": None, "pos": None}
     if s == "1루타":
         return {"res": "1B", "bb": None, "pos": None}
+    if s.startswith("병살"):  # 위치 없이 적힌 병살타: 괄호 첫 숫자가 처리 야수
+        d = re.search(r"\[(\d)", raw)
+        return {"res": "OUT", "bb": "GB", "pos": ENUM.get(d.group(1)) if d else None}
     if s.startswith(("송구실책", "포구실책", "실책")):
         pos = ENUM.get(err.group(1)) if err else None
         return {"res": "ROE", "bb": ("GB" if pos in INFIELD else "FB") if pos else None, "pos": pos}
@@ -65,6 +77,8 @@ def classify(raw):
     pos = POS[p]
     inf = pos in INFIELD
     # 결과
+    if suf == "G홈":  # 그라운드 홈런(인사이드 더 파크)
+        suf = "홈"
     if suf in ("2", "3", "홈") or (mod == "G" and suf == "홈"):
         res = {"2": "2B", "3": "3B", "홈": "HR"}[suf]
         bb = "LD" if mod == "선" else ("FB" if mod == "월" or suf == "홈" else None)

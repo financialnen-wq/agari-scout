@@ -136,7 +136,30 @@ def main():
                         "hand": meta["hand"], "group_code": gc, "sources": sorted(src), "games": rows})
         print(f"  {label} {name}: 경기 {len(rows)}")
         (RAW / "players.json").write_text(json.dumps(players, ensure_ascii=False))
+    fill_missing(players)
     (RAW / "players.json").write_text(json.dumps(players, ensure_ascii=False))
+
+
+def fill_missing(players):
+    """게임원 현재 명단에 없는 선수(이적·휴면): 우리 두 팀 박스스코어에서 이름으로 찾는다."""
+    games = json.loads((RAW / "gameone_games.json").read_text())
+    for p in players:
+        if p.get("group_code") or p["games"]:
+            continue
+        mine = {"디펜스원"} if p["team"] == "디펜스원" else {"아가리 OB", "아가리OB 2"}
+        for g in games.values():
+            if g["season"] not in SEASONS:
+                continue
+            bat = [r for r in g["bat"] if r["team"] in mine and r["name"] == p["name"]]
+            pit = [r for r in g["pit"] if r["team"] in mine and r["name"] == p["name"]]
+            if bat or pit:
+                opp = [t for t in g["teams"] if t not in mine]
+                p["games"].append({"game_idx": g["game_idx"], "season": g["season"], "club": g["club"],
+                                   "date": g["date"], "league": g["league"], "opp": opp[0] if opp else "",
+                                   "bat": bat, "pit": pit,
+                                   "url": f"/club/info/schedule/boxscore?club_idx={g['club']}&game_idx={g['game_idx']}"})
+        p["no"] = next((r["no"] for g in p["games"] for r in g["bat"] + g["pit"]), "")
+        print("  보완(팀 박스스코어):", p["team"], p["name"], len(p["games"]), "경기")
 
 
 if __name__ == "__main__":

@@ -146,7 +146,7 @@ svg.field{width:100%;height:auto;display:block}
 <script src="https://cdnjs.cloudflare.com/ajax/libs/html2canvas/1.4.1/html2canvas.min.js"></script>
 <script>
 let D;
-const S = {tab:'hit', team:'디펜스원', season:'전체', scope:'all', sort:{hit:'PA',pit:'outs'}, sel:{hit:null,pit:null}, picks:null};
+const S = {tab:'hit', team:'디펜스원', season:'전체', scope:'team', sort:{hit:'PA',pit:'outs'}, sel:{hit:null,pit:null}, picks:null};
 const TEAMS = ['디펜스원','AGARI'];
 const POSNAME = {P:'투수',C:'포수','1B':'1루','2B':'2루','3B':'3루',SS:'유격',LF:'좌익',LC:'좌중간',CF:'중견',RC:'우중간',RF:'우익'};
 const RESNAME = {'1B':'안타','2B':'2루타','3B':'3루타',HR:'홈런',OUT:'아웃',ROE:'실책출루',FC:'야선',SF:'희플',SH:'희번',K:'삼진',BB:'볼넷',IBB:'고의4구',HBP:'사구',CI:'타격방해'};
@@ -156,6 +156,7 @@ const f3 = v => v == null ? '–' : v.toFixed(3).replace(/^0/, '');
 const f2 = v => v == null ? '–' : v.toFixed(2);
 const pct = v => v == null ? '–' : Math.round(v * 100) + '%';
 const key = () => S.season + '|' + S.scope;
+const inScope = g => S.scope === 'all' || (S.scope === 'sl' ? g.sl : g.own);
 const teamColor = t => t === 'AGARI' ? 'var(--agari)' : 'var(--defense)';
 
 function seg(id, items, cur, on){
@@ -167,7 +168,7 @@ function renderBar(){
   seg('tab', [['hit','타자'],['pit','투수'],['card','수비 위치 카드']], S.tab, v => { S.tab = v; render(); });
   seg('team', TEAMS.map(t => [t, t]), S.team, v => { S.team = v; S.picks = null; render(); });
   seg('season', D.meta.seasons.map(s => [s, s === '전체' ? '25~26 전체' : s + '시즌']), S.season, v => { S.season = v; render(); });
-  seg('scope', [['all','모든 경기'],['sl','S리그만']], S.scope, v => { S.scope = v; render(); });
+  seg('scope', [['all','모든 경기'],['team', S.team + ' 경기만'],['sl','S리그만']], S.scope, v => { S.scope = v; render(); });
 }
 
 /* ---------- 공통: 툴팁 ---------- */
@@ -320,12 +321,12 @@ function hitDetail(p, a){
     <div class="two"><div>${fieldSVG(a)}</div><div class="tiles" style="grid-template-columns:1fr;align-content:start">${sideRow}
       <div class="tile"><div class="k">내야 / 외야</div><div class="v">${pct(a['IF%'])}<small>/ ${a['IF%'] == null ? '–' : pct(1 - a['IF%'])}</small></div></div></div></div>
     ${slOfficialHit(p)}
-    <div class="sec">경기별 기록 <span class="muted" style="font-weight:400">· 최근순 · ${p.bat_games.filter(g => (S.season === '전체' || g.season === S.season) && (S.scope === 'all' || g.sl)).length}경기</span></div>
+    <div class="sec">경기별 기록 <span class="muted" style="font-weight:400">· 최근순 · ${p.bat_games.filter(g => (S.season === '전체' || g.season === S.season) && inScope(g)).length}경기</span></div>
     ${gameLog(p)}`;
 }
 function chipCls(e){ return ['1B','2B','3B','HR'].includes(e.res) ? 'h' : e.res === 'K' ? 'k' : ''; }
 function gameLog(p){
-  const gs = p.bat_games.filter(g => (S.season === '전체' || g.season === S.season) && (S.scope === 'all' || g.sl));
+  const gs = p.bat_games.filter(g => (S.season === '전체' || g.season === S.season) && inScope(g));
   return `<div class="tbl-wrap" style="max-height:340px;overflow-y:auto"><table class="log"><thead><tr><th>날짜</th><th style="text-align:left">상대 · 리그</th><th style="text-align:left">타석 결과</th><th>타점</th></tr></thead><tbody>
   ${gs.map(g => `<tr onclick="window.open('${g.url}','_blank')" title="박스스코어 열기"><td>${g.date.slice(5)}</td><td style="text-align:left">${esc(g.opp)}<br><span class="muted">${esc(g.league)}${g.sl ? ' <span class="badge">S리그</span>' : ''}</span></td>
     <td class="pa">${g.pa.map(e => `<span class="chip ${chipCls(e)}" title="${esc(RESNAME[e.res] || '')}">${esc(e.raw)}</span>`).join('')}</td><td>${g.rbi}</td></tr>`).join('')}
@@ -365,7 +366,7 @@ function renderPit(){
   $('#ptbl tbody').onclick = e => { const tr = e.target.closest('tr'); if (tr){ S.sel.pit = tr.dataset.id; renderPit(); } };
 }
 function pitDetail(p, a){
-  const gs = p.pit_games.filter(g => (S.season === '전체' || g.season === S.season) && (S.scope === 'all' || g.sl));
+  const gs = p.pit_games.filter(g => (S.season === '전체' || g.season === S.season) && inScope(g));
   const r = p.sl26_pit;
   const slCols = ['경기수','방어율','승','패','세','이닝','타자','피안타','피홈런','4구','삼진','실점','자책'];
   return `<div class="phead"><span class="nm">${esc(p.name)}</span><span class="muted">${esc(p.team)} · ${esc(p.no)}번 · ${esc(hand(p.hand))}</span>
@@ -373,7 +374,7 @@ function pitDetail(p, a){
     <div class="tiles">
       <div class="tile"><div class="k">방어율</div><div class="v">${f2(a.ERA)}</div></div>
       <div class="tile"><div class="k">WHIP</div><div class="v">${f2(a.WHIP)}</div></div>
-      <div class="tile"><div class="k">이닝 · 경기</div><div class="v">${a.IP}<small>· ${a.G}G</small></div></div>
+      <div class="tile"><div class="k">이닝 (${a.G}경기)</div><div class="v">${a.IP}</div></div>
       <div class="tile"><div class="k">승 · 패 · 세</div><div class="v">${a.W}<small>· ${a.L} · ${a.S}</small></div></div>
       <div class="tile"><div class="k">삼진% · 볼넷%</div><div class="v">${pct(a['K%'])}<small>· ${pct(a['BB%'])}</small></div></div>
       <div class="tile"><div class="k">피안타율</div><div class="v">${f3(a.OAVG)}</div></div>
@@ -398,7 +399,7 @@ function shiftPlan(p, a){
   const infL = ((z['3B'] || 0) + (z.SS || 0)) / (inf || 1), infR = ((z['2B'] || 0) + (z['1B'] || 0)) / (inf || 1);
   const of = (z.LF || 0) + (z.LC || 0) + (z.CF || 0) + (z.RC || 0) + (z.RF || 0);
   const ofL = ((z.LF || 0) + (z.LC || 0)) / (of || 1), ofR = ((z.RF || 0) + (z.RC || 0)) / (of || 1);
-  if (inf >= 5 && infL >= 0.6){ Object.assign(shift, {'3B':[-3,0], SS:[-5,0], '2B':[-7,0], '1B':[-2,0]}); tips.push(`내야 땅볼 ${Math.round(infL * 100)}%가 3루·유격 쪽 → 내야 전체 3루 방향으로 한 칸`); }
+  if (inf >= 5 && infL >= 0.6){ Object.assign(shift, {'3B':[-3,0], SS:[-5,0], '2B':[-7,0], '1B':[-2,0]}); tips.push(`내야 타구 ${Math.round(infL * 100)}%가 3루·유격 쪽 → 내야 전체 3루 방향으로 한 칸`); }
   else if (inf >= 5 && infR >= 0.6){ Object.assign(shift, {'1B':[3,0], '2B':[5,0], SS:[7,0], '3B':[2,0]}); tips.push(`내야 타구 ${Math.round(infR * 100)}%가 1·2루 쪽 → 내야 전체 1루 방향으로 한 칸`); }
   if (of >= 5 && ofL >= 0.55){ Object.assign(shift, {LF:[-4,0], CF:[-7,0], RF:[-6,0]}); tips.push(`외야 타구 ${Math.round(ofL * 100)}%가 좌측 → 외야 좌측으로 이동, 우익수 좌중간 커버`); }
   else if (of >= 5 && ofR >= 0.55){ Object.assign(shift, {RF:[4,0], CF:[7,0], LF:[6,0]}); tips.push(`외야 타구 ${Math.round(ofR * 100)}%가 우측 → 외야 우측으로 이동, 좌익수 우중간 커버`); }
@@ -436,7 +437,7 @@ function renderCard(){
 }
 function dcard(p, a){
   const {shift, tips, n} = shiftPlan(p, a);
-  const scopeTxt = `${S.season === '전체' ? '2025~26' : S.season}${S.scope === 'sl' ? ' S리그' : ' 전 경기'}`;
+  const scopeTxt = `${S.season === '전체' ? '2025~26' : S.season}${({sl:' S리그', team:' ' + S.team + ' 경기', all:' 전 경기'})[S.scope]}`;
   return `<article class="dcard">
     <div class="t"><b>${esc(p.no ? p.no + '. ' : '')}${esc(p.name)}</b><span>${esc(p.team)} · ${esc(hand(p.hand))}</span></div>
     <div class="stats"><span>타율 <b>${f3(a.AVG)}</b></span><span>OPS <b>${f3(a.OPS)}</b></span><span>삼진 <b>${pct(a['K%'])}</b></span><span>땅볼 <b>${pct(a['GB%'])}</b></span><span>뜬공 <b>${pct(a['FB%'])}</b></span></div>
