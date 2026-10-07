@@ -1,0 +1,470 @@
+<!doctype html>
+<html lang="ko">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<title>AGARI 스카우팅 리포트</title>
+<link rel="stylesheet" href="https://cdn.jsdelivr.net/gh/orioncactus/pretendard@v1.3.9/dist/web/static/pretendard.min.css">
+<style>
+:root{
+  color-scheme: light;
+  --bg:#f4f4f1; --surface:#fcfcfb; --surface-2:#f0efec; --line:#e2e1dc;
+  --ink:#0b0b0b; --ink-2:#52514e; --ink-3:#8a8984;
+  --agari:#2a78d6; --defense:#eb6834;
+  --gb:#2a78d6; --ld:#1baf7a; --fb:#eb6834; --unk:#c9c8c2;
+  --seq-0:#f0efec; --seq-1:#cde2fb; --seq-2:#9ec5f4; --seq-3:#6da7ec; --seq-4:#3987e5; --seq-5:#256abf; --seq-6:#184f95;
+  --grass:#e7efe3; --dirt:#efe6da; --field-line:#b9b8b1;
+  --good:#0ca30c; --warn:#c98500; --crit:#d03b3b;
+  --radius:12px;
+}
+@media (prefers-color-scheme: dark){
+  :root:where(:not([data-theme="light"])){
+    color-scheme: dark;
+    --bg:#121211; --surface:#1a1a19; --surface-2:#242422; --line:#33332f;
+    --ink:#ffffff; --ink-2:#c3c2b7; --ink-3:#8f8e86;
+    --agari:#3987e5; --defense:#d95926;
+    --gb:#3987e5; --ld:#199e70; --fb:#d95926; --unk:#4a4a46;
+    --seq-0:#242422; --seq-1:#104281; --seq-2:#184f95; --seq-3:#1c5cab; --seq-4:#256abf; --seq-5:#3987e5; --seq-6:#6da7ec;
+    --grass:#1f2a1d; --dirt:#2e2820; --field-line:#55544e;
+  }
+}
+:root[data-theme="dark"]{
+  color-scheme: dark;
+  --bg:#121211; --surface:#1a1a19; --surface-2:#242422; --line:#33332f;
+  --ink:#ffffff; --ink-2:#c3c2b7; --ink-3:#8f8e86;
+  --agari:#3987e5; --defense:#d95926;
+  --gb:#3987e5; --ld:#199e70; --fb:#d95926; --unk:#4a4a46;
+  --seq-0:#242422; --seq-1:#104281; --seq-2:#184f95; --seq-3:#1c5cab; --seq-4:#256abf; --seq-5:#3987e5; --seq-6:#6da7ec;
+  --grass:#1f2a1d; --dirt:#2e2820; --field-line:#55544e;
+}
+*{box-sizing:border-box}
+body{margin:0;background:var(--bg);color:var(--ink);font:14px/1.5 Pretendard,-apple-system,"Apple SD Gothic Neo","Malgun Gothic",system-ui,sans-serif;-webkit-font-smoothing:antialiased}
+.wrap{max-width:1240px;margin:0 auto;padding:20px 16px 60px}
+header.top{display:flex;flex-wrap:wrap;align-items:flex-end;justify-content:space-between;gap:12px;margin-bottom:16px}
+.eyebrow{font-size:12px;color:var(--ink-3);letter-spacing:.04em}
+h1{font-size:24px;margin:2px 0 0;letter-spacing:-.02em}
+.match{display:flex;flex-wrap:wrap;align-items:center;gap:4px 10px;white-space:nowrap;background:var(--surface);border:1px solid var(--line);border-radius:999px;padding:6px 14px;font-size:13px;color:var(--ink-2)}
+.dot{width:10px;height:10px;border-radius:50%;display:inline-block}
+.bar{display:flex;flex-wrap:wrap;gap:8px;align-items:center;margin:0 0 16px;position:sticky;top:env(safe-area-inset-top,0px);z-index:5;background:var(--bg);padding:8px 0}
+.seg{display:inline-flex;background:var(--surface-2);border-radius:999px;padding:3px}
+.seg button{border:0;background:transparent;color:var(--ink-2);font:inherit;font-size:13px;padding:6px 12px;border-radius:999px;cursor:pointer;white-space:nowrap}
+.seg button[aria-pressed="true"]{background:var(--surface);color:var(--ink);box-shadow:0 1px 2px rgba(0,0,0,.08);font-weight:600}
+.tabs{margin-right:auto}
+@media (max-width:600px){.bar{position:static}.match{border-radius:12px}}
+.grid{display:grid;grid-template-columns:minmax(0,1.05fr) minmax(0,1fr);gap:16px;align-items:start}
+@media (max-width:900px){.grid{grid-template-columns:minmax(0,1fr)}}
+.card{min-width:0;background:var(--surface);border:1px solid var(--line);border-radius:var(--radius);padding:16px}
+.card h2{font-size:15px;margin:0 0 4px}
+.card .sub{color:var(--ink-3);font-size:12px;margin:0 0 12px}
+.tbl-wrap{overflow-x:auto;margin:0 -16px;padding:0 16px}
+table{border-collapse:collapse;width:100%;font-variant-numeric:tabular-nums}
+th,td{padding:7px 8px;text-align:right;white-space:nowrap;border-bottom:1px solid var(--line)}
+th{font-size:12px;color:var(--ink-3);font-weight:500;cursor:pointer;user-select:none;position:sticky;top:0;background:var(--surface)}
+th:first-child,td:first-child{text-align:left}
+th.sorted{color:var(--ink)}
+tbody tr{cursor:pointer}
+tbody tr:hover{background:var(--surface-2)}
+tbody tr.sel{background:var(--surface-2);box-shadow:inset 3px 0 0 var(--accent,var(--agari))}
+td.name{font-weight:600}
+td.name small{font-weight:400;color:var(--ink-3);margin-left:4px}
+.muted{color:var(--ink-3)}
+.badge{display:inline-block;font-size:11px;padding:1px 6px;border-radius:6px;background:var(--surface-2);color:var(--ink-2);margin-left:4px;font-weight:500}
+.tiles{display:grid;grid-template-columns:repeat(auto-fit,minmax(92px,1fr));gap:8px;margin-bottom:16px}
+.tile{background:var(--surface-2);border-radius:10px;padding:10px 12px}
+.tile .k{font-size:12px;color:var(--ink-3)}
+.tile .v{font-size:20px;font-weight:700;letter-spacing:-.02em;font-variant-numeric:tabular-nums}
+.tile .v small{font-size:12px;font-weight:500;color:var(--ink-3);margin-left:2px}
+.phead{display:flex;align-items:baseline;gap:8px;flex-wrap:wrap;margin-bottom:12px}
+.phead .nm{font-size:22px;font-weight:700;letter-spacing:-.02em}
+.phead a{color:var(--ink-2);font-size:12px}
+.sec{margin:18px 0 8px;font-size:13px;font-weight:600}
+.stack{display:flex;height:22px;border-radius:6px;overflow:hidden;gap:2px;background:var(--surface)}
+.stack span{display:block;height:100%}
+.legend{display:flex;flex-wrap:wrap;gap:12px;font-size:12px;color:var(--ink-2);margin-top:6px}
+.legend i{display:inline-block;width:10px;height:10px;border-radius:3px;margin-right:5px;vertical-align:-1px}
+.two{display:grid;grid-template-columns:minmax(0,1fr) minmax(0,1fr);gap:14px;align-items:start}
+@media (max-width:560px){.two{grid-template-columns:1fr}}
+svg.field{width:100%;height:auto;display:block}
+.field text{font-family:inherit}
+.tip{position:fixed;pointer-events:none;background:var(--ink);color:var(--surface);font-size:12px;padding:6px 8px;border-radius:6px;z-index:50;max-width:240px;line-height:1.4}
+.log td{font-size:12px}
+.log td.pa{text-align:left;white-space:normal;min-width:180px}
+.chip{display:inline-block;font-size:11px;padding:0 5px;border-radius:4px;margin:1px 2px 1px 0;background:var(--surface-2);color:var(--ink-2)}
+.chip.h{background:color-mix(in srgb,var(--agari) 18%,transparent);color:var(--ink)}
+.chip.k{color:var(--ink-3)}
+.empty{padding:40px 16px;text-align:center;color:var(--ink-3)}
+.note{font-size:12px;color:var(--ink-3);margin-top:10px}
+/* 수비 카드 */
+.cards-tools{display:flex;flex-wrap:wrap;gap:8px;align-items:center;margin-bottom:12px}
+.btn{border:1px solid var(--line);background:var(--surface);color:var(--ink);font:inherit;font-size:13px;padding:7px 12px;border-radius:8px;cursor:pointer}
+.btn.primary{background:var(--ink);color:var(--surface);border-color:var(--ink)}
+.pick{display:flex;flex-wrap:wrap;gap:6px;margin-bottom:14px}
+.pick label{display:inline-flex;align-items:center;gap:4px;font-size:13px;background:var(--surface);border:1px solid var(--line);border-radius:999px;padding:4px 10px;cursor:pointer}
+.cards{display:grid;grid-template-columns:repeat(auto-fill,minmax(300px,1fr));gap:14px}
+.dcard{background:#fff;color:#111;border:1px solid #d9d8d2;border-radius:12px;padding:14px;break-inside:avoid;page-break-inside:avoid}
+.dcard .t{display:flex;justify-content:space-between;align-items:baseline;gap:8px}
+.dcard .t b{font-size:18px;letter-spacing:-.02em}
+.dcard .t span{font-size:12px;color:#666}
+.dcard .stats{display:flex;gap:10px;font-size:12px;color:#444;margin:4px 0 6px;flex-wrap:wrap;font-variant-numeric:tabular-nums}
+.dcard .stats b{color:#111}
+.dcard ul{margin:6px 0 0;padding-left:18px;font-size:12.5px;line-height:1.45}
+.dcard .foot{display:flex;justify-content:space-between;align-items:center;margin-top:8px;font-size:11px;color:#888}
+.dcard .foot button{font-size:11px;padding:3px 8px;border:1px solid #ccc;background:#fff;border-radius:6px;cursor:pointer;color:#333}
+.dcard svg{width:100%;height:auto;display:block}
+@media print{
+  @page{size:A4;margin:10mm}
+  body{background:#fff}
+  .wrap{padding:0;max-width:none}
+  header.top,.bar,.cards-tools,.pick,.note,.no-print{display:none!important}
+  .cards{grid-template-columns:1fr 1fr;gap:8mm}
+  .dcard .foot button{display:none}
+}
+</style>
+</head>
+<body>
+<div class="wrap">
+  <header class="top">
+    <div>
+      <div class="eyebrow">2026 서울시민리그(S리그) · 일요리그</div>
+      <h1>AGARI 스카우팅 리포트</h1>
+    </div>
+    <div class="match"><span class="dot" style="background:var(--agari)"></span>AGARI <span class="muted">vs</span> <span class="dot" style="background:var(--defense)"></span>디펜스원 <span class="muted">10월 11일(일) 12:00 · 신월야구장</span></div>
+  </header>
+
+  <div class="bar" role="toolbar">
+    <div class="seg tabs" id="tab"></div>
+    <div class="seg" id="team"></div>
+    <div class="seg" id="season"></div>
+    <div class="seg" id="scope"></div>
+  </div>
+
+  <main id="main"></main>
+  <p class="note" id="foot"></p>
+</div>
+<div class="tip" id="tip" hidden></div>
+
+<script src="https://cdnjs.cloudflare.com/ajax/libs/html2canvas/1.4.1/html2canvas.min.js"></script>
+<script>
+let D;
+const S = {tab:'hit', team:'디펜스원', season:'전체', scope:'all', sort:{hit:'PA',pit:'outs'}, sel:{hit:null,pit:null}, picks:null};
+const TEAMS = ['디펜스원','AGARI'];
+const POSNAME = {P:'투수',C:'포수','1B':'1루','2B':'2루','3B':'3루',SS:'유격',LF:'좌익',LC:'좌중간',CF:'중견',RC:'우중간',RF:'우익'};
+const RESNAME = {'1B':'안타','2B':'2루타','3B':'3루타',HR:'홈런',OUT:'아웃',ROE:'실책출루',FC:'야선',SF:'희플',SH:'희번',K:'삼진',BB:'볼넷',IBB:'고의4구',HBP:'사구',CI:'타격방해'};
+const $ = s => document.querySelector(s);
+const esc = s => String(s ?? '').replace(/[&<>"]/g, c => ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;'}[c]));
+const f3 = v => v == null ? '–' : v.toFixed(3).replace(/^0/, '');
+const f2 = v => v == null ? '–' : v.toFixed(2);
+const pct = v => v == null ? '–' : Math.round(v * 100) + '%';
+const key = () => S.season + '|' + S.scope;
+const teamColor = t => t === 'AGARI' ? 'var(--agari)' : 'var(--defense)';
+
+function seg(id, items, cur, on){
+  const el = document.getElementById(id);
+  el.innerHTML = items.map(([v, l]) => `<button aria-pressed="${v === cur}" data-v="${esc(v)}">${l}</button>`).join('');
+  el.onclick = e => { const b = e.target.closest('button'); if (b) on(b.dataset.v); };
+}
+function renderBar(){
+  seg('tab', [['hit','타자'],['pit','투수'],['card','수비 위치 카드']], S.tab, v => { S.tab = v; render(); });
+  seg('team', TEAMS.map(t => [t, t]), S.team, v => { S.team = v; S.picks = null; render(); });
+  seg('season', D.meta.seasons.map(s => [s, s === '전체' ? '25~26 전체' : s + '시즌']), S.season, v => { S.season = v; render(); });
+  seg('scope', [['all','모든 경기'],['sl','S리그만']], S.scope, v => { S.scope = v; render(); });
+}
+
+/* ---------- 공통: 툴팁 ---------- */
+const tip = $('#tip');
+function showTip(e, html){ tip.innerHTML = html; tip.hidden = false; moveTip(e); }
+function moveTip(e){ const x = Math.min(e.clientX + 14, innerWidth - 250); tip.style.left = x + 'px'; tip.style.top = (e.clientY + 14) + 'px'; }
+document.addEventListener('pointermove', e => { if (!tip.hidden) moveTip(e); });
+function bindTips(root){
+  root.querySelectorAll('[data-tip]').forEach(n => {
+    n.addEventListener('pointerenter', e => showTip(e, n.dataset.tip));
+    n.addEventListener('pointerleave', () => tip.hidden = true);
+  });
+}
+
+/* ---------- 야구장 SVG ---------- */
+// 홈(200,372) 기준 극좌표. 각도: 중견 방향 0°, 좌측 -, 우측 +
+const H = {x:200, y:372};
+const P = (deg, r) => { const a = (deg - 90) * Math.PI / 180; return [H.x + r * Math.cos(a), H.y + r * Math.sin(a)]; };
+const ZONES = [
+  ['3B',-45,-24,58,165],['SS',-24,-4,58,165],['P',-4,4,0,165],['2B',4,24,58,165],['1B',24,45,58,165],
+  ['LF',-45,-27,165,330],['LC',-27,-9,165,330],['CF',-9,9,165,330],['RC',9,27,165,330],['RF',27,45,165,330]
+];
+function wedge(a0, a1, r0, r1){
+  const [x0,y0] = P(a0, r1), [x1,y1] = P(a1, r1), [x2,y2] = P(a1, r0), [x3,y3] = P(a0, r0);
+  return r0 === 0
+    ? `M${H.x},${H.y}L${x0},${y0}A${r1},${r1} 0 0 1 ${x1},${y1}Z`
+    : `M${x3},${y3}L${x0},${y0}A${r1},${r1} 0 0 1 ${x1},${y1}L${x2},${y2}A${r0},${r0} 0 0 0 ${x3},${y3}Z`;
+}
+const FIELDERS = {P:[0,62],C:[0,-14],'1B':[37,128],'2B':[13,150],SS:[-13,150],'3B':[-37,128],LF:[-28,250],CF:[0,272],RF:[28,250]};
+function seqColor(share){ // 0~1 → 단색 순차 스케일
+  if (!share) return 'var(--seq-0)';
+  const steps = ['--seq-1','--seq-2','--seq-3','--seq-4','--seq-5','--seq-6'];
+  return `var(${steps[Math.min(steps.length - 1, Math.floor(share / 0.35 * steps.length))]})`;
+}
+function zoneCounts(a){ // P·C를 투수 칸에 합침
+  const z = {...a.zone}; z.P = (z.P || 0) + (z.C || 0); delete z.C;
+  const zh = {...a.zone_hit}; zh.P = (zh.P || 0) + (zh.C || 0);
+  return {z, zh};
+}
+function fieldSVG(a, opt = {}){
+  const {z, zh} = zoneCounts(a);
+  const n = Object.values(z).reduce((s, v) => s + v, 0);
+  const print = opt.print;
+  const lineC = print ? '#bdbcb5' : 'var(--field-line)';
+  let g = '';
+  // 바탕: 외야 잔디·내야 흙
+  g += `<path d="${wedge(-45,45,0,330)}" fill="${print ? '#eef3ea' : 'var(--grass)'}"/>`;
+  g += `<path d="${wedge(-45,45,0,165)}" fill="${print ? '#f3ece2' : 'var(--dirt)'}"/>`;
+  // 구역 히트
+  for (const [k, a0, a1, r0, r1] of ZONES){
+    const c = z[k] || 0, sh = n ? c / n : 0;
+    const fill = print ? printSeq(sh) : seqColor(sh);
+    const label = `${POSNAME[k]} 방향 · ${c}개 (${Math.round(sh * 100)}%)` + (zh[k] ? ` · 안타 ${zh[k]}` : '');
+    g += `<path d="${wedge(a0, a1, r0, r1)}" fill="${fill}" fill-opacity="${sh ? 1 : 0}" stroke="${print ? '#fff' : 'var(--surface)'}" stroke-width="2" data-tip="${esc(label)}"/>`;
+  }
+  // 파울라인·베이스
+  const [lx, ly] = P(-45, 330), [rx, ry] = P(45, 330);
+  g += `<path d="M${lx},${ly}L${H.x},${H.y}L${rx},${ry}" fill="none" stroke="${lineC}" stroke-width="1.5"/>`;
+  const b1 = P(45, 90), b2 = P(0, 127), b3 = P(-45, 90);
+  g += `<path d="M${H.x},${H.y}L${b1}L${b2}L${b3}Z" fill="none" stroke="${lineC}" stroke-width="1"/>`;
+  // 구역 % 라벨
+  for (const [k, a0, a1, r0, r1] of ZONES){
+    const c = z[k] || 0; if (!n || !c) continue;
+    // 숫자는 수비수 표시와 겹치지 않게: 외야는 펜스 쪽, 내야는 투수 쪽
+    const sh = c / n, [x, y] = P((a0 + a1) / 2, k === 'P' ? 34 : r0 > 100 ? 308 : 98);
+    const dark = sh >= 0.18;
+    g += `<text x="${x}" y="${y}" text-anchor="middle" font-size="15" font-weight="700" fill="${print ? (dark ? '#fff' : '#222') : (dark ? '#fff' : 'var(--ink)')}" pointer-events="none">${Math.round(sh * 100)}%</text>`;
+  }
+  // 수비수 위치(정상 → 권장)
+  if (opt.shift){
+    for (const [pos, [d, r]] of Object.entries(FIELDERS)){
+      if (pos === 'C') continue;
+      const s = opt.shift[pos] || [0, 0];
+      const [x0, y0] = P(d, r), [x1, y1] = P(d + s[0], r + s[1]);
+      const moved = Math.abs(s[0]) + Math.abs(s[1]) > 0;
+      if (moved) g += `<circle cx="${x0}" cy="${y0}" r="11" fill="none" stroke="#777" stroke-width="1.2" stroke-dasharray="3 2"/><line x1="${x0}" y1="${y0}" x2="${x1}" y2="${y1}" stroke="#333" stroke-width="1.5"/>`;
+      g += `<circle cx="${x1}" cy="${y1}" r="13" fill="${moved ? '#111' : '#fff'}" stroke="#111" stroke-width="1.5"/>`;
+      g += `<text x="${x1}" y="${y1 + 4.5}" text-anchor="middle" font-size="13" font-weight="700" fill="${moved ? '#fff' : '#111'}">${({P:'투',C:'포','1B':'1','2B':'2',SS:'유','3B':'3',LF:'좌',CF:'중',RF:'우'})[pos]}</text>`;
+    }
+  }
+  return `<svg class="field" viewBox="-40 34 480 352" role="img" aria-label="타구 방향 분포">${g}</svg>`;
+}
+function printSeq(sh){
+  if (!sh) return '#ffffff';
+  const steps = ['#cde2fb','#9ec5f4','#6da7ec','#3987e5','#256abf','#184f95'];
+  return steps[Math.min(steps.length - 1, Math.floor(sh / 0.35 * steps.length))];
+}
+
+/* ---------- 타자 ---------- */
+const HCOLS = [
+  ['name','선수'],['G','G'],['PA','타석'],['AVG','타율',f3],['OBP','출루',f3],['SLG','장타',f3],['OPS','OPS',f3],
+  ['HR','HR'],['SB','도루'],['K%','삼진%',pct],['BB%','볼넷%',pct],['GB%','땅볼%',pct],['FB%','뜬공%',pct],['GO/AO','GO/AO',f2],['pull%','당김%',pct]
+];
+function hitters(){
+  return D.players.filter(p => p.team === S.team).map(p => ({p, a: p.hit[key()]})).filter(r => r.a.PA > 0);
+}
+function sortRows(rows, col, getter){
+  const dir = col === 'name' ? 1 : -1;
+  return rows.sort((x, y) => {
+    const a = getter(x, col), b = getter(y, col);
+    if (col === 'name') return a.localeCompare(b, 'ko');
+    return ((b ?? -1) - (a ?? -1));
+  });
+}
+function renderHit(){
+  const rows = sortRows(hitters(), S.sort.hit, (r, c) => c === 'name' ? r.p.name : r.a[c]);
+  if (!rows.length) return $('#main').innerHTML = emptyWithOfficial('hit');
+  if (!rows.find(r => r.p.id === S.sel.hit)) S.sel.hit = rows[0].p.id;
+  const cur = rows.find(r => r.p.id === S.sel.hit);
+  $('#main').innerHTML = `<div class="grid">
+    <section class="card"><h2>${esc(S.team)} 타자 ${rows.length}명</h2>
+      <p class="sub">S리그 출전 선수 · 게임원 기록(소속 팀 전 경기) · 열 제목을 누르면 정렬</p>
+      <div class="tbl-wrap"><table id="htbl"><thead><tr>${HCOLS.map(([k, l]) => `<th data-k="${k}" class="${S.sort.hit === k ? 'sorted' : ''}">${l}</th>`).join('')}</tr></thead>
+      <tbody>${rows.map(({p, a}) => `<tr data-id="${p.id}" class="${p.id === S.sel.hit ? 'sel' : ''}" style="--accent:${teamColor(p.team)}">${HCOLS.map(([k, , fm]) =>
+        k === 'name' ? `<td class="name">${esc(p.name)}<small>${esc(p.no)} · ${esc(hand(p.hand))}</small></td>` : `<td>${fm ? fm(a[k]) : (a[k] ?? '–')}</td>`).join('')}</tr>`).join('')}</tbody></table></div>
+    </section>
+    <section class="card" id="detail">${hitDetail(cur.p, cur.a)}</section></div>`;
+  $('#htbl thead').onclick = e => { const th = e.target.closest('th'); if (th){ S.sort.hit = th.dataset.k; renderHit(); } };
+  $('#htbl tbody').onclick = e => { const tr = e.target.closest('tr'); if (tr){ S.sel.hit = tr.dataset.id; renderHit(); } };
+  bindTips($('#detail'));
+}
+const hand = h => h ? h.replace('우투', '우투/').replace('좌투', '좌투/').replace('//', '/') : '투타 미등록';
+function slOfficialHit(p){
+  const r = p.sl26_hit; if (!r) return '';
+  return `<div class="sec">S리그 공식 기록실 2026 <span class="badge">sleague.or.kr</span></div>
+  <div class="tbl-wrap"><table><thead><tr>${['경기수','타율','타석','안타','2루타','3루타','홈런','타점','득점','도루','4구','삼진','OPS'].map(c => `<th>${c}</th>`).join('')}</tr></thead>
+  <tbody><tr>${['경기수','타율','타석','안타','2루타','3루타','홈런','타점','득점','도루','4구','삼진','OPS'].map(c => `<td>${esc(r[c])}</td>`).join('')}</tr></tbody></table></div>`;
+}
+function hitDetail(p, a){
+  const known = a.GB + a.LD + a.FB, n = a.dir_n;
+  const stack = known ? [['GB','땅볼','var(--gb)'],['LD','라이너','var(--ld)'],['FB','뜬공','var(--fb)']]
+    .filter(([k]) => a[k]).map(([k, l, c]) => `<span style="width:${a[k] / known * 100}%;background:${c}" data-tip="${l} ${a[k]}개 (${Math.round(a[k] / known * 100)}%)"></span>`).join('') : '';
+  const side = a.side, ps = p.hand.endsWith('좌타') ? 'R' : p.hand.endsWith('우타') ? 'L' : null;
+  const sideRow = n ? ['L','C','R'].map(s => `<div class="tile"><div class="k">${s === 'L' ? '좌측' : s === 'C' ? '중앙' : '우측'}${ps ? (s === ps ? ' · 당김' : s === 'C' ? '' : ' · 밀어침') : ''}</div><div class="v">${Math.round(side[s] / n * 100)}<small>% · ${side[s]}</small></div></div>`).join('') : '';
+  return `<div class="phead"><span class="nm">${esc(p.name)}</span><span class="muted">${esc(p.team)} · ${esc(p.no)}번 · ${esc(p.pos || '포지션 미등록')} · ${esc(hand(p.hand))}</span>
+      ${p.locker ? `<a href="${p.locker}" target="_blank" rel="noopener">게임원 라커룸 ↗</a>` : ''}</div>
+    <div class="tiles">
+      <div class="tile"><div class="k">타율</div><div class="v">${f3(a.AVG)}</div></div>
+      <div class="tile"><div class="k">출루율</div><div class="v">${f3(a.OBP)}</div></div>
+      <div class="tile"><div class="k">장타율</div><div class="v">${f3(a.SLG)}</div></div>
+      <div class="tile"><div class="k">OPS</div><div class="v">${f3(a.OPS)}</div></div>
+      <div class="tile"><div class="k">경기 · 타석</div><div class="v">${a.G}<small>· ${a.PA}</small></div></div>
+      <div class="tile"><div class="k">안타 · 장타</div><div class="v">${a.H}<small>· ${a['2B'] + a['3B'] + a.HR}</small></div></div>
+      <div class="tile"><div class="k">삼진% · 볼넷%</div><div class="v">${pct(a['K%'])}<small>· ${pct(a['BB%'])}</small></div></div>
+      <div class="tile"><div class="k">타점 · 득점 · 도루</div><div class="v">${a.RBI}<small>· ${a.R} · ${a.SB}</small></div></div>
+    </div>
+    <div class="sec">타구 유형 <span class="muted" style="font-weight:400">· 궤적이 기록된 ${known}개 (외야 안타 중 궤적 불명 ${a.BIPunk}개 제외)</span></div>
+    ${known ? `<div class="stack">${stack}</div><div class="legend"><span><i style="background:var(--gb)"></i>땅볼 ${pct(a['GB%'])}</span><span><i style="background:var(--ld)"></i>라이너 ${pct(a['LD%'])}</span><span><i style="background:var(--fb)"></i>뜬공 ${pct(a['FB%'])}</span><span>땅볼아웃/뜬공아웃 <b>${f2(a['GO/AO'])}</b> (${a.GO}:${a.AO})</span></div>` : '<p class="muted">기록 없음</p>'}
+    <div class="sec">타구 방향 <span class="muted" style="font-weight:400">· 방향이 기록된 타구 ${n}개 · 칸에 마우스를 올리면 개수</span></div>
+    <div class="two"><div>${fieldSVG(a)}</div><div class="tiles" style="grid-template-columns:1fr;align-content:start">${sideRow}
+      <div class="tile"><div class="k">내야 / 외야</div><div class="v">${pct(a['IF%'])}<small>/ ${a['IF%'] == null ? '–' : pct(1 - a['IF%'])}</small></div></div></div></div>
+    ${slOfficialHit(p)}
+    <div class="sec">경기별 기록 <span class="muted" style="font-weight:400">· 최근순 · ${p.bat_games.filter(g => (S.season === '전체' || g.season === S.season) && (S.scope === 'all' || g.sl)).length}경기</span></div>
+    ${gameLog(p)}`;
+}
+function chipCls(e){ return ['1B','2B','3B','HR'].includes(e.res) ? 'h' : e.res === 'K' ? 'k' : ''; }
+function gameLog(p){
+  const gs = p.bat_games.filter(g => (S.season === '전체' || g.season === S.season) && (S.scope === 'all' || g.sl));
+  return `<div class="tbl-wrap" style="max-height:340px;overflow-y:auto"><table class="log"><thead><tr><th>날짜</th><th style="text-align:left">상대 · 리그</th><th style="text-align:left">타석 결과</th><th>타점</th></tr></thead><tbody>
+  ${gs.map(g => `<tr onclick="window.open('${g.url}','_blank')" title="박스스코어 열기"><td>${g.date.slice(5)}</td><td style="text-align:left">${esc(g.opp)}<br><span class="muted">${esc(g.league)}${g.sl ? ' <span class="badge">S리그</span>' : ''}</span></td>
+    <td class="pa">${g.pa.map(e => `<span class="chip ${chipCls(e)}" title="${esc(RESNAME[e.res] || '')}">${esc(e.raw)}</span>`).join('')}</td><td>${g.rbi}</td></tr>`).join('')}
+  </tbody></table></div>`;
+}
+
+// 게임원 기록이 없는 조건(예: AGARI 2026) → S리그 기록실 2026 표로 대체
+const SLH = ['경기수','타율','타석','타수','안타','2루타','3루타','홈런','타점','득점','도루','4구','삼진','출루율','장타율','OPS'];
+const SLP = ['경기수','방어율','승','패','세','이닝','타자','피안타','피홈런','4구','삼진','실점','자책'];
+function emptyWithOfficial(kind){
+  const cols = kind === 'hit' ? SLH : SLP, k = kind === 'hit' ? 'sl26_hit' : 'sl26_pit';
+  const ps = D.players.filter(p => p.team === S.team && p[k]);
+  const msg = `<div class="card empty">이 조건에는 게임원 ${kind === 'hit' ? '타격' : '투구'} 기록이 없습니다.${S.team === 'AGARI' ? '<br>AGARI는 2026 시즌 경기가 게임원에 올라와 있지 않습니다. 시즌을 25~26 전체나 2025로 바꿔 보세요.' : ''}</div>`;
+  if (!ps.length) return msg;
+  return msg + `<section class="card" style="margin-top:16px"><h2>${esc(S.team)} · S리그 공식 기록실 2026</h2><p class="sub">sleague.or.kr 기록실 (규정 10타석 이상만 공개)</p>
+    <div class="tbl-wrap"><table><thead><tr><th>선수</th>${cols.map(c => `<th>${c}</th>`).join('')}</tr></thead>
+    <tbody>${ps.map(p => `<tr style="cursor:default"><td class="name">${esc(p.name)}</td>${cols.map(c => `<td>${esc(p[k][c] ?? '–')}</td>`).join('')}</tr>`).join('')}</tbody></table></div></section>`;
+}
+
+/* ---------- 투수 ---------- */
+const PCOLS = [['name','선수'],['G','G'],['outs','이닝'],['ERA','방어율',f2],['WHIP','WHIP',f2],['K7','삼진/7',v => v ?? '–'],['BB7','볼넷/7',v => v ?? '–'],['K/BB','K/BB',f2],['OAVG','피안타율',f3],['W','승'],['L','패']];
+function renderPit(){
+  const rows = sortRows(D.players.filter(p => p.team === S.team).map(p => ({p, a: p.pit[key()]})).filter(r => r.a.G > 0), S.sort.pit,
+    (r, c) => c === 'name' ? r.p.name : (c === 'ERA' || c === 'WHIP' || c === 'OAVG' || c === 'BB7') ? -(r.a[c] ?? 99) : r.a[c]);
+  if (!rows.length) return $('#main').innerHTML = emptyWithOfficial('pit');
+  if (!rows.find(r => r.p.id === S.sel.pit)) S.sel.pit = rows[0].p.id;
+  const cur = rows.find(r => r.p.id === S.sel.pit);
+  $('#main').innerHTML = `<div class="grid">
+    <section class="card"><h2>${esc(S.team)} 투수 ${rows.length}명</h2>
+      <p class="sub">방어율·삼진/7·볼넷/7은 7이닝 기준(게임원·S리그 방식)</p>
+      <div class="tbl-wrap"><table id="ptbl"><thead><tr>${PCOLS.map(([k, l]) => `<th data-k="${k}" class="${S.sort.pit === k ? 'sorted' : ''}">${l}</th>`).join('')}</tr></thead>
+      <tbody>${rows.map(({p, a}) => `<tr data-id="${p.id}" class="${p.id === S.sel.pit ? 'sel' : ''}" style="--accent:${teamColor(p.team)}">${PCOLS.map(([k, , fm]) =>
+        k === 'name' ? `<td class="name">${esc(p.name)}<small>${esc(p.no)} · ${esc(hand(p.hand))}</small></td>` : k === 'outs' ? `<td>${a.IP}</td>` : `<td>${fm ? fm(a[k]) : (a[k] ?? '–')}</td>`).join('')}</tr>`).join('')}</tbody></table></div>
+    </section>
+    <section class="card" id="detail">${pitDetail(cur.p, cur.a)}</section></div>`;
+  $('#ptbl thead').onclick = e => { const th = e.target.closest('th'); if (th){ S.sort.pit = th.dataset.k; renderPit(); } };
+  $('#ptbl tbody').onclick = e => { const tr = e.target.closest('tr'); if (tr){ S.sel.pit = tr.dataset.id; renderPit(); } };
+}
+function pitDetail(p, a){
+  const gs = p.pit_games.filter(g => (S.season === '전체' || g.season === S.season) && (S.scope === 'all' || g.sl));
+  const r = p.sl26_pit;
+  const slCols = ['경기수','방어율','승','패','세','이닝','타자','피안타','피홈런','4구','삼진','실점','자책'];
+  return `<div class="phead"><span class="nm">${esc(p.name)}</span><span class="muted">${esc(p.team)} · ${esc(p.no)}번 · ${esc(hand(p.hand))}</span>
+      ${p.locker ? `<a href="${p.locker}" target="_blank" rel="noopener">게임원 라커룸 ↗</a>` : ''}</div>
+    <div class="tiles">
+      <div class="tile"><div class="k">방어율</div><div class="v">${f2(a.ERA)}</div></div>
+      <div class="tile"><div class="k">WHIP</div><div class="v">${f2(a.WHIP)}</div></div>
+      <div class="tile"><div class="k">이닝 · 경기</div><div class="v">${a.IP}<small>· ${a.G}G</small></div></div>
+      <div class="tile"><div class="k">승 · 패 · 세</div><div class="v">${a.W}<small>· ${a.L} · ${a.S}</small></div></div>
+      <div class="tile"><div class="k">삼진% · 볼넷%</div><div class="v">${pct(a['K%'])}<small>· ${pct(a['BB%'])}</small></div></div>
+      <div class="tile"><div class="k">피안타율</div><div class="v">${f3(a.OAVG)}</div></div>
+      <div class="tile"><div class="k">경기당 이닝</div><div class="v">${a['IP/G'] ?? '–'}</div></div>
+      <div class="tile"><div class="k">경기당 투구수</div><div class="v">${a['NP/G'] || '–'}</div></div>
+    </div>
+    ${r ? `<div class="sec">S리그 공식 기록실 2026 <span class="badge">sleague.or.kr</span></div><div class="tbl-wrap"><table><thead><tr>${slCols.map(c => `<th>${c}</th>`).join('')}</tr></thead><tbody><tr>${slCols.map(c => `<td>${esc(r[c])}</td>`).join('')}</tr></tbody></table></div>` : ''}
+    <div class="sec">경기별 투구 <span class="muted" style="font-weight:400">· ${gs.length}경기</span></div>
+    <div class="tbl-wrap" style="max-height:360px;overflow-y:auto"><table class="log"><thead><tr><th>날짜</th><th style="text-align:left">상대 · 리그</th><th>결과</th><th>이닝</th><th>타자</th><th>피안타</th><th>볼넷</th><th>삼진</th><th>실점</th><th>자책</th><th>투구수</th></tr></thead><tbody>
+    ${gs.map(g => { const l = g.line; return `<tr onclick="window.open('${g.url}','_blank')"><td>${g.date.slice(5)}</td><td style="text-align:left">${esc(g.opp)}<br><span class="muted">${esc(g.league)}${g.sl ? ' <span class="badge">S리그</span>' : ''}</span></td><td>${esc(l['결과'])}</td><td>${esc(l['이닝'])}</td><td>${esc(l['타자'])}</td><td>${esc(l['피안타'])}</td><td>${esc(l['볼넷'])}</td><td>${esc(l['삼진'])}</td><td>${esc(l['실점'])}</td><td>${esc(l['자책점'])}</td><td>${esc(l['투구수']) || '–'}</td></tr>`; }).join('')}
+    </tbody></table></div>`;
+}
+
+/* ---------- 수비 위치 카드 ---------- */
+// 규칙: 방향 기록 타구 8개 미만이면 기본 수비. 내야·외야 각각 한쪽 비중이 55% 이상이면 그쪽으로 이동.
+function shiftPlan(p, a){
+  const {z} = zoneCounts(a);
+  const n = Object.values(z).reduce((s, v) => s + v, 0);
+  const tips = [], shift = {};
+  if (n < 8){ tips.push(`방향 기록 타구 ${n}개 — 표본이 적어 정상 수비`); return {shift, tips, n}; }
+  const inf = (z['3B'] || 0) + (z.SS || 0) + (z.P || 0) + (z['2B'] || 0) + (z['1B'] || 0);
+  const infL = ((z['3B'] || 0) + (z.SS || 0)) / (inf || 1), infR = ((z['2B'] || 0) + (z['1B'] || 0)) / (inf || 1);
+  const of = (z.LF || 0) + (z.LC || 0) + (z.CF || 0) + (z.RC || 0) + (z.RF || 0);
+  const ofL = ((z.LF || 0) + (z.LC || 0)) / (of || 1), ofR = ((z.RF || 0) + (z.RC || 0)) / (of || 1);
+  if (inf >= 5 && infL >= 0.6){ Object.assign(shift, {'3B':[-3,0], SS:[-5,0], '2B':[-7,0], '1B':[-2,0]}); tips.push(`내야 땅볼 ${Math.round(infL * 100)}%가 3루·유격 쪽 → 내야 전체 3루 방향으로 한 칸`); }
+  else if (inf >= 5 && infR >= 0.6){ Object.assign(shift, {'1B':[3,0], '2B':[5,0], SS:[7,0], '3B':[2,0]}); tips.push(`내야 타구 ${Math.round(infR * 100)}%가 1·2루 쪽 → 내야 전체 1루 방향으로 한 칸`); }
+  if (of >= 5 && ofL >= 0.55){ Object.assign(shift, {LF:[-4,0], CF:[-7,0], RF:[-6,0]}); tips.push(`외야 타구 ${Math.round(ofL * 100)}%가 좌측 → 외야 좌측으로 이동, 우익수 좌중간 커버`); }
+  else if (of >= 5 && ofR >= 0.55){ Object.assign(shift, {RF:[4,0], CF:[7,0], LF:[6,0]}); tips.push(`외야 타구 ${Math.round(ofR * 100)}%가 우측 → 외야 우측으로 이동, 좌익수 우중간 커버`); }
+  const xbh = a['2B'] + a['3B'] + a.HR;
+  const deep = (a['FB%'] != null && a['FB%'] >= 0.45) || (a.H >= 5 && xbh / a.H >= 0.35);
+  const shallow = a['GB%'] != null && a['GB%'] >= 0.6 && !deep;
+  for (const pos of ['LF','CF','RF']){
+    const s = shift[pos] || [0, 0];
+    shift[pos] = [s[0], deep ? 16 : shallow ? -18 : 0];
+  }
+  if (deep) tips.push(`장타 ${xbh}개 / 뜬공 ${pct(a['FB%'])} → 외야 한 발 뒤로`);
+  if (shallow) tips.push(`땅볼 ${pct(a['GB%'])} → 외야 앞으로, 내야 땅볼 처리 집중`);
+  const bunts = (a.BU || 0);
+  if (a.SB >= 3 || bunts >= 2){ tips.push(`도루 ${a.SB} · 번트 ${bunts} — 출루 시 견제·포수 송구 준비`); }
+  if (a['K%'] != null && a['K%'] >= 0.3) tips.push(`삼진율 ${pct(a['K%'])} — 유인구 승부 유효`);
+  if (!Object.keys(shift).some(k => k !== 'LF' && k !== 'CF' && k !== 'RF') && !tips.some(t => t.includes('외야 좌측') || t.includes('외야 우측'))) tips.unshift('뚜렷한 방향 쏠림 없음 — 좌우는 정상 위치');
+  return {shift, tips, n};
+}
+function renderCard(){
+  const rows = hitters().sort((x, y) => y.a.PA - x.a.PA);
+  if (!rows.length) return $('#main').innerHTML = `<div class="card empty">이 조건에 타격 기록이 없습니다.</div>`;
+  if (!S.picks) S.picks = new Set(rows.filter(r => r.a.PA >= 10).map(r => r.p.id));
+  $('#main').innerHTML = `<div class="cards-tools">
+      <button class="btn primary" id="print">카드 인쇄 (A4 · 장당 4~6명)</button>
+      <button class="btn" id="all">전체 선택</button><button class="btn" id="none">선택 해제</button>
+      <span class="muted" style="font-size:12px">검은 원 = 권장 위치, 점선 원 = 정상 위치 · 칸 색이 진할수록 타구가 많은 방향</span></div>
+    <div class="pick">${rows.map(({p, a}) => `<label><input type="checkbox" data-id="${p.id}" ${S.picks.has(p.id) ? 'checked' : ''}>${esc(p.name)} <span class="muted">${a.PA}</span></label>`).join('')}</div>
+    <div class="cards">${rows.filter(r => S.picks.has(r.p.id)).map(({p, a}) => dcard(p, a)).join('')}</div>`;
+  $('.pick').onchange = e => { const id = e.target.dataset.id; e.target.checked ? S.picks.add(id) : S.picks.delete(id); renderCard(); };
+  $('#all').onclick = () => { S.picks = new Set(rows.map(r => r.p.id)); renderCard(); };
+  $('#none').onclick = () => { S.picks = new Set(); renderCard(); };
+  $('#print').onclick = () => window.print();
+  document.querySelectorAll('.dcard .png').forEach(b => b.onclick = () => savePng(b.closest('.dcard'), b.dataset.name));
+  bindTips($('.cards'));
+}
+function dcard(p, a){
+  const {shift, tips, n} = shiftPlan(p, a);
+  const scopeTxt = `${S.season === '전체' ? '2025~26' : S.season}${S.scope === 'sl' ? ' S리그' : ' 전 경기'}`;
+  return `<article class="dcard">
+    <div class="t"><b>${esc(p.no ? p.no + '. ' : '')}${esc(p.name)}</b><span>${esc(p.team)} · ${esc(hand(p.hand))}</span></div>
+    <div class="stats"><span>타율 <b>${f3(a.AVG)}</b></span><span>OPS <b>${f3(a.OPS)}</b></span><span>삼진 <b>${pct(a['K%'])}</b></span><span>땅볼 <b>${pct(a['GB%'])}</b></span><span>뜬공 <b>${pct(a['FB%'])}</b></span></div>
+    ${fieldSVG(a, {shift, print:true})}
+    <ul>${tips.map(t => `<li>${esc(t)}</li>`).join('')}</ul>
+    <div class="foot"><span>${scopeTxt} · ${a.PA}타석 · 방향 타구 ${n}개</span><button class="png" data-name="${esc(p.name)}">PNG 저장</button></div>
+  </article>`;
+}
+async function savePng(el, name){
+  if (!window.html2canvas) return alert('이미지 저장 모듈을 불러오지 못했습니다. 인쇄 버튼을 이용하세요.');
+  const c = await html2canvas(el, {backgroundColor:'#ffffff', scale:2});
+  const a = document.createElement('a'); a.download = `수비카드_${name}.png`; a.href = c.toDataURL('image/png'); a.click();
+}
+
+function render(){
+  renderBar();
+  tip.hidden = true;
+  ({hit:renderHit, pit:renderPit, card:renderCard})[S.tab]();
+  $('#foot').innerHTML = `데이터 기준 ${esc(D.meta.built)} · 출처: 서울시민리그 기록실(sleague.or.kr), 게임원(gameone.kr) 박스스코어 ·
+    선수 범위 = S리그 출전이 확인된 선수(S리그 기록실 2026 + 게임원 S리그 경기) · 기록은 해당 선수가 게임원에서 뛴 모든 팀 경기 합산.
+    땅볼/뜬공은 게임원 타석 코드(예: 유땅=유격수 땅볼, 좌플=좌익수 플라이, 좌선2=좌익선상 2루타)에서 자동 분류했으며, 외야 안타 중 궤적이 표기되지 않은 타구는 유형 비율에서 뺐습니다.`;
+}
+// 기록 업데이트가 바로 보이도록 data.js는 매번 새로 받는다
+const ds = document.createElement('script');
+ds.src = 'data.js?t=' + Date.now();
+ds.onload = () => { D = window.SCOUT; render(); };
+ds.onerror = () => { $('#main').innerHTML = '<div class="card empty">데이터 파일(data.js)을 불러오지 못했습니다.</div>'; };
+document.head.appendChild(ds);
+</script>
+</body>
+</html>
