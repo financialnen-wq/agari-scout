@@ -111,13 +111,58 @@ svg.field{width:100%;height:auto;display:block}
 .dcard .foot{display:flex;justify-content:space-between;align-items:center;margin-top:8px;font-size:11px;color:#888}
 .dcard .foot button{font-size:11px;padding:3px 8px;border:1px solid #ccc;background:#fff;border-radius:6px;cursor:pointer;color:#333}
 .dcard svg{width:100%;height:auto;display:block}
+/* 라인업 체크 */
+.lu-tools{display:flex;flex-wrap:wrap;gap:8px;align-items:center;margin-bottom:12px}
+.lu-meta{display:flex;flex-wrap:wrap;gap:10px;margin-bottom:12px}
+.lu-meta label{display:flex;flex-direction:column;font-size:12px;color:var(--ink-3);gap:3px}
+.lu-in{font:inherit;font-size:14px;color:var(--ink);background:var(--surface);border:1px solid var(--line);border-radius:8px;padding:6px 8px;min-width:0}
+.lu-tbl td{text-align:left;vertical-align:middle;padding:6px 6px}
+.lu-tbl tbody tr{cursor:default}
+.lu-tbl tbody tr:hover{background:transparent}
+.lu-tbl .ord{font-weight:700;font-size:16px;width:28px;text-align:center}
+.lu-tbl .pred{font-size:12px;color:var(--ink-2);white-space:normal;min-width:92px}
+.lu-tbl .pred small{display:block;color:var(--ink-3)}
+.lu-tbl input.nm{width:96px}
+.lu-tbl select.ps{width:64px}
+.lu-tbl select.pa{width:64px;font-size:13px;padding:5px 4px}
+.mk{display:inline-block;font-size:12px;font-weight:700;padding:2px 7px;border-radius:999px;white-space:nowrap}
+.mk.ok{background:color-mix(in srgb,var(--good) 16%,transparent);color:var(--good)}
+.mk.mid{background:color-mix(in srgb,var(--warn) 16%,transparent);color:var(--warn)}
+.mk.no{background:color-mix(in srgb,var(--crit) 14%,transparent);color:var(--crit)}
+.mk.none{color:var(--ink-3)}
+.sheet{background:#fff;color:#111;border:1px solid #d9d8d2;border-radius:12px;padding:22px 24px;margin:18px 0}
+.sheet .sh-top{display:flex;justify-content:space-between;align-items:flex-end;gap:12px;border-bottom:2px solid #111;padding-bottom:10px;margin-bottom:14px}
+.sheet .sh-top .ey{font-size:11px;color:#777;letter-spacing:.04em}
+.sheet .sh-top h3{margin:2px 0 0;font-size:22px;letter-spacing:-.02em}
+.sheet .sh-top .meta{text-align:right;font-size:12px;color:#444;line-height:1.6}
+.sheet .kpi{display:flex;gap:10px;margin-bottom:14px;flex-wrap:wrap}
+.sheet .kpi div{flex:1;min-width:110px;background:#f4f4f1;border-radius:10px;padding:8px 12px}
+.sheet .kpi .k{font-size:11px;color:#777}
+.sheet .kpi .v{font-size:20px;font-weight:700;letter-spacing:-.02em}
+.sheet table th{position:static;background:#fff;color:#777;cursor:default;font-size:11px;border-bottom:1.5px solid #111;text-align:center}
+.sheet table td{text-align:center;font-size:13px;border-bottom:1px solid #e6e5e0;padding:8px 6px}
+.sheet table td.l{text-align:left}
+.sheet table tbody tr{cursor:default}
+.sheet table tbody tr:hover{background:transparent}
+.sheet .o{font-weight:800;font-size:15px}
+.sheet .nmb{font-weight:700;font-size:14px}
+.sheet .r{display:inline-block;min-width:34px;font-size:11.5px;padding:2px 4px;border-radius:5px;background:#f0efec;color:#444}
+.sheet .r.h{background:#dcebfd;color:#123}
+.sheet .r.w{background:#e2f4e6;color:#0b5a1e}
+.sheet .r.k{background:#fbe3e3;color:#8a1f1f}
+.sheet .memo{font-size:11.5px;color:#555;text-align:left;white-space:normal}
+.sheet .sh-foot{margin-top:12px;font-size:10.5px;color:#888;line-height:1.5}
+.lu-cards-h{font-size:14px;font-weight:700;margin:20px 0 10px}
+@media (max-width:600px){.sheet{padding:16px 12px}.sheet .sh-top h3{font-size:18px}}
 @media print{
   @page{size:A4;margin:10mm}
   body{background:#fff}
   .wrap{padding:0;max-width:none}
-  header.top,.bar,.cards-tools,.pick,.note,.no-print{display:none!important}
+  header.top,.bar,.cards-tools,.lu-tools,.pick,.note,.no-print{display:none!important}
   .cards{grid-template-columns:1fr 1fr;gap:8mm}
   .dcard .foot button{display:none}
+  .sheet{border:0;padding:0;margin:0 0 6mm;border-radius:0}
+  .lu-break{break-before:page;page-break-before:always}
 }
 </style>
 </head>
@@ -165,8 +210,9 @@ function seg(id, items, cur, on){
   el.onclick = e => { const b = e.target.closest('button'); if (b) on(b.dataset.v); };
 }
 function renderBar(){
-  seg('tab', [['hit','타자'],['pit','투수'],['card','수비 위치 카드']], S.tab, v => { S.tab = v; render(); });
+  seg('tab', [['hit','타자'],['pit','투수'],['card','수비 위치 카드'],['lu','라인업 체크']], S.tab, v => { S.tab = v; if (v === 'lu') S.team = '디펜스원'; render(); });
   seg('team', TEAMS.map(t => [t, t]), S.team, v => { S.team = v; S.picks = null; render(); });
+  $('#team').style.display = S.tab === 'lu' ? 'none' : '';
   seg('season', D.meta.seasons.map(s => [s, s === '전체' ? '25~26 전체' : s + '시즌']), S.season, v => { S.season = v; render(); });
   seg('scope', [['all','모든 경기'],['team', S.team + ' 경기만'],['sl','S리그만']], S.scope, v => { S.scope = v; render(); });
 }
@@ -452,10 +498,137 @@ async function savePng(el, name){
   const a = document.createElement('a'); a.download = `수비카드_${name}.png`; a.href = c.toDataURL('image/png'); a.click();
 }
 
+/* ---------- 라인업 체크 (디펜스원) ---------- */
+// 예상 라인업: 2026 디펜스원 23경기(게임원) 타순 빈도 + S리그 4경기 가중, 2026-10-10 기준
+const PRED = [
+  {o:1, n:'김민규', p:'유', why:'1번 16경기 중 14회 · S리그 OPS 2.04 · 도루 6', alt:'강은규', conf:'높음'},
+  {o:2, n:'이재성', p:'二', why:'S리그 2번·1번 · 타율 .714', alt:'유한성', conf:'중간'},
+  {o:3, n:'문희성', p:'一', why:'2026 선발 18경기 전부 3번', alt:'김민규', conf:'높음'},
+  {o:4, n:'강태성', p:'三', why:'4번 5회·5번 4회 · S리그 OPS 1.15', alt:'박현수', conf:'중간'},
+  {o:5, n:'유한성', p:'중', why:'5~6번 주로 · 좌익/중견', alt:'강태성', conf:'중간'},
+  {o:6, n:'박현수', p:'우', why:'S리그 4~6번 · 우익/지명', alt:'강은규', conf:'낮음'},
+  {o:7, n:'이정식', p:'좌', why:'하위 타순 고정(9번 7회) · 2루/좌익', alt:'이일훈', conf:'낮음'},
+  {o:8, n:'김세훈', p:'지', why:'S리그 8번 지명 2회', alt:'강은규', conf:'낮음'},
+  {o:9, n:'문준혁', p:'포', why:'S리그 포수 4경기 전부', alt:'이한주', conf:'높음'},
+];
+const PRED_PIT = '박은빈 (S리그 2승·방어율 2.33) — 대안 강은규·신연식·한성재';
+const LU_POS = ['', '투','포','一','二','三','유','좌','중','우','지'];
+const LU_RES = ['', '안타','2루타','3루타','홈런','볼넷','사구','삼진','땅볼','뜬공','라이너','실책','희생','야선'];
+const LU_KEY = 'agari.lineup.20261011';
+const LU_N = 5; // 타석 칸 수
+function luLoad(){
+  let v = null;
+  try { v = JSON.parse(localStorage.getItem(LU_KEY)); } catch (e) {}
+  if (!v || !Array.isArray(v.rows)) v = {pit:'', score:'', rows: PRED.map(() => ({n:'', p:'', res:Array(LU_N).fill(''), memo:''}))};
+  v.rows.forEach(r => { while (r.res.length < LU_N) r.res.push(''); });
+  return v;
+}
+function luSave(v){ try { localStorage.setItem(LU_KEY, JSON.stringify(v)); } catch (e) {} }
+function luMark(i, name){
+  name = (name || '').trim();
+  if (!name) return ['none', '입력 전'];
+  if (name === PRED[i].n) return ['ok', '✓ 적중'];
+  if (PRED.some(x => x.n === name)) return ['mid', '△ 타순만 다름'];
+  return ['no', '✕ 예상 밖'];
+}
+function resCls(r){ return ['안타','2루타','3루타','홈런'].includes(r) ? 'h' : ['볼넷','사구'].includes(r) ? 'w' : r === '삼진' ? 'k' : ''; }
+function renderLineup(){
+  const v = luLoad();
+  const roster = D.players.filter(p => p.team === '디펜스원');
+  $('#main').innerHTML = `
+    <div class="lu-tools">
+      <button class="btn primary" id="luPdf">PDF로 저장</button>
+      <button class="btn" id="luFill">예상 라인업으로 채우기</button>
+      <button class="btn" id="luReset">전체 지우기</button>
+      <span class="muted" style="font-size:12px">입력하면 이 기기에 자동 저장됩니다 · PDF 저장 = 인쇄 창에서 'PDF로 저장' 선택</span>
+    </div>
+    <section class="card no-print">
+      <h2>디펜스원 실제 라인업 입력</h2>
+      <p class="sub">타순별로 실제 선수·포지션을 넣으면 예상과 자동 비교합니다. 경기 중에는 타석 결과를 골라 체크하세요.</p>
+      <div class="lu-meta">
+        <label>디펜스원 선발 투수<input class="lu-in" id="luPit" list="luRoster" value="${esc(v.pit)}" placeholder="예상: 박은빈"></label>
+        <label>스코어 (AGARI : 디펜스원)<input class="lu-in" id="luScore" value="${esc(v.score)}" placeholder="예: 5 : 3"></label>
+      </div>
+      <datalist id="luRoster">${roster.map(p => `<option value="${esc(p.name)}">${esc(p.no)}번</option>`).join('')}</datalist>
+      <div class="tbl-wrap"><table class="lu-tbl"><thead><tr><th>타순</th><th>예상</th><th>실제 선수</th><th>포지션</th><th>비교</th>${Array.from({length:LU_N}, (_, k) => `<th>${k + 1}타석</th>`).join('')}<th>메모</th></tr></thead>
+      <tbody>${PRED.map((x, i) => { const r = v.rows[i], [c, t] = luMark(i, r.n); return `<tr data-i="${i}">
+        <td class="ord">${x.o}</td>
+        <td class="pred">${esc(x.n)} (${esc(x.p)})<small>신뢰도 ${x.conf}</small></td>
+        <td><input class="lu-in nm" list="luRoster" data-f="n" value="${esc(r.n)}" placeholder="${esc(x.n)}"></td>
+        <td><select class="lu-in ps" data-f="p">${LU_POS.map(o => `<option ${o === r.p ? 'selected' : ''} value="${o}">${o || '–'}</option>`).join('')}</select></td>
+        <td><span class="mk ${c}">${t}</span></td>
+        ${r.res.map((rv, k) => `<td><select class="lu-in pa" data-f="res" data-k="${k}">${LU_RES.map(o => `<option ${o === rv ? 'selected' : ''} value="${o}">${o || '–'}</option>`).join('')}</select></td>`).join('')}
+        <td><input class="lu-in" data-f="memo" value="${esc(r.memo)}" placeholder="특이사항" style="width:140px"></td></tr>`; }).join('')}</tbody></table></div>
+    </section>
+    <div id="luSheet">${luSheet(v)}</div>
+    <div id="luCards">${luCards(v)}</div>`;
+  const save = () => { luSave(v); $('#luSheet').innerHTML = luSheet(v); };
+  $('.lu-tbl tbody').oninput = e => {
+    const t = e.target, tr = t.closest('tr'); if (!tr) return;
+    const r = v.rows[+tr.dataset.i];
+    if (t.dataset.f === 'res') r.res[+t.dataset.k] = t.value; else r[t.dataset.f] = t.value;
+    if (t.dataset.f === 'n'){
+      const [c, tx] = luMark(+tr.dataset.i, t.value), mk = tr.querySelector('.mk');
+      mk.className = 'mk ' + c; mk.textContent = tx;
+      const pl = roster.find(p => p.name === t.value.trim());
+      // 포지션이 비어 있으면 예상 포지션을 자동으로 채움(같은 선수일 때)
+      if (pl && !r.p && t.value.trim() === PRED[+tr.dataset.i].n){ r.p = PRED[+tr.dataset.i].p; tr.querySelector('.ps').value = r.p; }
+    }
+    save();
+  };
+  $('.lu-tbl tbody').onchange = e => { if (e.target.dataset.f === 'n'){ $('#luCards').innerHTML = luCards(v); luBindCards(); } };
+  $('#luPit').oninput = e => { v.pit = e.target.value; save(); };
+  $('#luScore').oninput = e => { v.score = e.target.value; save(); };
+  $('#luFill').onclick = () => { PRED.forEach((x, i) => { if (!v.rows[i].n){ v.rows[i].n = x.n; v.rows[i].p = x.p; } }); luSave(v); renderLineup(); };
+  $('#luReset').onclick = () => { if (confirm('입력한 라인업과 타석 결과를 모두 지울까요?')){ try { localStorage.removeItem(LU_KEY); } catch (e) {} renderLineup(); } };
+  $('#luPdf').onclick = () => {
+    const t = document.title; document.title = '디펜스원_라인업_20261011';
+    window.print(); setTimeout(() => document.title = t, 500);
+  };
+  luBindCards();
+}
+function luBindCards(){
+  document.querySelectorAll('#luCards .dcard .png').forEach(b => b.onclick = () => savePng(b.closest('.dcard'), b.dataset.name));
+  bindTips($('#luCards'));
+}
+function luSheet(v){
+  const filled = v.rows.filter(r => r.n.trim()).length;
+  const hit = v.rows.filter((r, i) => luMark(i, r.n)[0] === 'ok').length;
+  const inl = v.rows.filter((r, i) => ['ok','mid'].includes(luMark(i, r.n)[0])).length;
+  const all = v.rows.flatMap(r => r.res).filter(Boolean);
+  const onb = all.filter(r => ['안타','2루타','3루타','홈런','볼넷','사구'].includes(r)).length;
+  const ks = all.filter(r => r === '삼진').length;
+  return `<article class="sheet">
+    <div class="sh-top"><div><div class="ey">2026 서울시민리그(S리그) · 일요리그 · 상대 분석</div><h3>디펜스원 라인업 체크</h3></div>
+      <div class="meta">10월 11일(일) 12:00 · 신월야구장<br>AGARI vs 디펜스원${v.score ? ` · <b>${esc(v.score)}</b>` : ''}<br>선발 투수 <b>${esc(v.pit || '미입력')}</b></div></div>
+    <div class="kpi">
+      <div><div class="k">타순까지 적중</div><div class="v">${hit}<small style="font-size:12px;color:#777"> / ${filled || 9}</small></div></div>
+      <div><div class="k">예상 9명 중 선발 포함</div><div class="v">${inl}<small style="font-size:12px;color:#777"> / ${filled || 9}</small></div></div>
+      <div><div class="k">상대 출루 (안타·볼넷)</div><div class="v">${onb}<small style="font-size:12px;color:#777"> / ${all.length}타석</small></div></div>
+      <div><div class="k">삼진 (우리 투수)</div><div class="v">${ks}</div></div>
+    </div>
+    <table><thead><tr><th>타순</th><th style="text-align:left">실제</th><th>포지션</th><th style="text-align:left">예상</th><th>비교</th>${Array.from({length:LU_N}, (_, k) => `<th>${k + 1}</th>`).join('')}<th style="text-align:left">메모</th></tr></thead>
+    <tbody>${PRED.map((x, i) => { const r = v.rows[i], [c, t] = luMark(i, r.n); return `<tr>
+      <td class="o">${x.o}</td><td class="l nmb">${esc(r.n || '')}</td><td>${esc(r.p || '')}</td>
+      <td class="l" style="color:#666;font-size:12px">${esc(x.n)} (${esc(x.p)})</td>
+      <td><span class="mk ${c}">${r.n ? t : ''}</span></td>
+      ${r.res.map(rv => `<td>${rv ? `<span class="r ${resCls(rv)}">${esc(rv)}</span>` : ''}</td>`).join('')}
+      <td class="memo">${esc(r.memo)}</td></tr>`; }).join('')}</tbody></table>
+    <div class="sh-foot">예상 라인업 근거: 게임원 2026 디펜스원 23경기 선발 타순 빈도 + S리그 경기 가중(데이터 기준 ${esc(D.meta.built)}). 예상 선발 투수: ${esc(PRED_PIT)}.</div>
+  </article>`;
+}
+function luCards(v){
+  const ps = v.rows.map(r => D.players.find(p => p.team === '디펜스원' && p.name === r.n.trim())).filter(Boolean);
+  if (!ps.length) return '';
+  const cards = ps.map(p => ({p, a: p.hit[key()]})).filter(x => x.a && x.a.PA > 0);
+  return `<div class="lu-break"></div><div class="lu-cards-h">실제 타순 선수 수비 위치 카드 <span class="muted" style="font-weight:400;font-size:12px">(${S.season === '전체' ? '2025~26' : S.season} · ${({sl:'S리그', team:'디펜스원 경기', all:'전 경기'})[S.scope]} 기준, 상단에서 변경)</span></div>
+    <div class="cards">${cards.map(({p, a}) => dcard(p, a)).join('')}</div>`;
+}
+
 function render(){
   renderBar();
   tip.hidden = true;
-  ({hit:renderHit, pit:renderPit, card:renderCard})[S.tab]();
+  ({hit:renderHit, pit:renderPit, card:renderCard, lu:renderLineup})[S.tab]();
   $('#foot').innerHTML = `데이터 기준 ${esc(D.meta.built)} · 출처: 서울시민리그 기록실(sleague.or.kr), 게임원(gameone.kr) 박스스코어 ·
     선수 범위 = S리그 출전이 확인된 선수(S리그 기록실 2026 + 게임원 S리그 경기) · 기록은 해당 선수가 게임원에서 뛴 모든 팀 경기 합산.
     땅볼/뜬공은 게임원 타석 코드(예: 유땅=유격수 땅볼, 좌플=좌익수 플라이, 좌선2=좌익선상 2루타)에서 자동 분류했으며, 외야 안타 중 궤적이 표기되지 않은 타구는 유형 비율에서 뺐습니다.`;
